@@ -130,4 +130,75 @@ class MonitoringController extends Controller
         return redirect()->route('monitoring.index')
             ->with('success', "Device '{$deviceName}' berhasil dihapus dari monitoring.");
     }
+
+    /**
+     * Export data sensor ke CSV
+     */
+    public function exportCsv(Request $request, $id)
+    {
+        // Validasi user punya akses
+        $userDevice = UserDevice::with(['device.sensors'])
+            ->where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $device = $userDevice->device;
+        $sensors = $device->sensors;
+
+        // Validasi tanggal
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $startDate = $request->start_date . ' 00:00:00';
+        $endDate = $request->end_date . ' 23:59:59';
+
+        // Ambil data dari database
+        if (!$device->table_name || !\Schema::hasTable($device->table_name)) {
+            return back()->with('error', 'Tidak ada data untuk diexport.');
+        }
+
+        $data = DB::table($device->table_name)
+            ->whereBetween('recorded_at', [$startDate, $endDate])
+            ->orderBy('recorded_at', 'asc')
+            ->get();
+
+        if ($data->isEmpty()) {
+            return back()->with('error', 'Tidak ada data pada rentang tanggal tersebut.');
+        }
+
+        // Generate CSV
+        $filename = 'sensor_data_' . $device->token . '_' . date('Ymd_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function () use ($data, $sensors) {
+            $file = fopen('php://output', 'w');
+
+            // Header row
+            $headerRow = ['No', 'Waktu'];
+            foreach ($sensors as $sensor) {
+                $headerRow[] = $sensor->sensor_label . ' (' . $sensor->unit . ')';
+            }
+            fputcsv($file, $headerRow);
+
+            // Data rows
+            $no = 1;
+            foreach ($data as $row) {
+                $dataRow = [$no++, $row->recorded_at];
+                foreach ($sensors as $sensor) {
+                    $dataRow[] = $row->{$sensor->sensor_name} ?? '';
+                }
+                fputcsv($file, $dataRow);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

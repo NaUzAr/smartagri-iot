@@ -282,6 +282,9 @@
             <span class="device-type-badge">
                 {{ strtoupper($device->type ?? 'DEVICE') }}
             </span>
+            <button type="button" class="btn-glass" data-bs-toggle="modal" data-bs-target="#exportModal">
+                <i class="bi bi-download me-1"></i> Download CSV
+            </button>
             <a href="{{ route('monitoring.index') }}" class="btn-glass">
                 <i class="bi bi-grid me-1"></i> Semua Device
             </a>
@@ -315,14 +318,18 @@
         </div>
 
         <!-- Tabs -->
+        @php
+            $isTableActive = request()->has('page');
+        @endphp
+        <div id="data-section"></div>
         <ul class="nav nav-tabs nav-tabs-glass mt-4" id="dataTabs" role="tablist">
             <li class="nav-item">
-                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#chartTab">
+                <button class="nav-link {{ !$isTableActive ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#chartTab">
                     <i class="bi bi-graph-up me-1"></i> Grafik
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tableTab">
+                <button class="nav-link {{ $isTableActive ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tableTab">
                     <i class="bi bi-table me-1"></i> Tabel Data ({{ $logData->total() }} records)
                 </button>
             </li>
@@ -330,14 +337,14 @@
 
         <div class="tab-content">
             <!-- Chart Tab -->
-            <div class="tab-pane fade show active" id="chartTab">
+            <div class="tab-pane fade {{ !$isTableActive ? 'show active' : '' }}" id="chartTab">
                 <div class="glass-card mt-0" style="border-radius: 0 0 20px 20px;">
                     <canvas id="sensorChart" height="100"></canvas>
                 </div>
             </div>
             
             <!-- Table Tab -->
-            <div class="tab-pane fade" id="tableTab">
+            <div class="tab-pane fade {{ $isTableActive ? 'show active' : '' }}" id="tableTab">
                 <div class="glass-card mt-0" style="border-radius: 0 0 20px 20px;">
                     <div class="table-responsive">
                         <table class="table table-glass mb-0">
@@ -379,7 +386,7 @@
                                     @if($logData->onFirstPage())
                                         <li class="page-item disabled"><span class="page-link">«</span></li>
                                     @else
-                                        <li class="page-item"><a class="page-link" href="{{ $logData->previousPageUrl() }}">«</a></li>
+                                        <li class="page-item"><a class="page-link" href="{{ $logData->previousPageUrl() }}#data-section">«</a></li>
                                     @endif
                                     
                                     {{-- Page Numbers --}}
@@ -387,13 +394,13 @@
                                         @if($page == $logData->currentPage())
                                             <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
                                         @else
-                                            <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
+                                            <li class="page-item"><a class="page-link" href="{{ $url }}#data-section">{{ $page }}</a></li>
                                         @endif
                                     @endforeach
                                     
                                     {{-- Next --}}
                                     @if($logData->hasMorePages())
-                                        <li class="page-item"><a class="page-link" href="{{ $logData->nextPageUrl() }}">»</a></li>
+                                        <li class="page-item"><a class="page-link" href="{{ $logData->nextPageUrl() }}#data-section">»</a></li>
                                     @else
                                         <li class="page-item disabled"><span class="page-link">»</span></li>
                                     @endif
@@ -495,6 +502,65 @@
         </div>
     @endif
 </div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: linear-gradient(135deg, #134e4a 0%, #166534 100%); border: 1px solid rgba(255,255,255,0.2);">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-white" id="exportModalLabel">
+                    <i class="bi bi-download me-2"></i>Download Data CSV
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('monitoring.export', $userDevice->id) }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <p class="text-white-50 mb-4">Pilih rentang tanggal untuk data yang ingin di-download:</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-white">
+                            <i class="bi bi-calendar-event me-1"></i> Tanggal Mulai
+                        </label>
+                        <input type="date" name="start_date" class="form-control bg-dark text-white border-secondary" 
+                               value="{{ date('Y-m-d', strtotime('-7 days')) }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-white">
+                            <i class="bi bi-calendar-check me-1"></i> Tanggal Akhir
+                        </label>
+                        <input type="date" name="end_date" class="form-control bg-dark text-white border-secondary" 
+                               value="{{ date('Y-m-d') }}" required>
+                    </div>
+                    
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-sm btn-outline-light" onclick="setDateRange(7)">7 Hari</button>
+                        <button type="button" class="btn btn-sm btn-outline-light" onclick="setDateRange(30)">30 Hari</button>
+                        <button type="button" class="btn btn-sm btn-outline-light" onclick="setDateRange(90)">3 Bulan</button>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn" style="background: var(--primary-gradient); color: #fff;">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Download CSV
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function setDateRange(days) {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    document.querySelector('input[name="start_date"]').value = startDate.toISOString().split('T')[0];
+    document.querySelector('input[name="end_date"]').value = endDate.toISOString().split('T')[0];
+}
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

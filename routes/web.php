@@ -32,6 +32,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/add', [MonitoringController::class, 'store'])->name('store');
         Route::get('/device/{id}', [MonitoringController::class, 'show'])->name('show');
         Route::delete('/device/{id}', [MonitoringController::class, 'destroy'])->name('destroy');
+        Route::post('/device/{id}/export', [MonitoringController::class, 'exportCsv'])->name('export');
     });
 
 });
