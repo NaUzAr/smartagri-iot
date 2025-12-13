@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edit Device - Smart Agriculture</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-green: #22c55e;
+            --dark-green: #166534;
+            --light-green: #86efac;
+            --sky-blue: #0ea5e9;
+            --light-sky: #7dd3fc;
+            --primary-gradient: linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #0ea5e9 100%);
+            --secondary-gradient: linear-gradient(135deg, #86efac 0%, #22c55e 100%);
+            --nature-gradient: linear-gradient(135deg, #134e4a 0%, #166534 50%, #14532d 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--nature-gradient);
+            min-height: 100vh;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 20% 80%, rgba(34, 197, 94, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.2) 0%, transparent 50%);
+        }
+
+        .navbar-glass {
+            background: rgba(20, 83, 45, 0.95) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: #86efac !important;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .nav-link:hover {
+            color: #86efac !important;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+        }
+
+        .card-header-gradient {
+            background: linear-gradient(135deg, #facc15 0%, #f59e0b 100%);
+            border-radius: 24px 24px 0 0 !important;
+            padding: 1.5rem 2rem;
+        }
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+        }
+
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary-green);
+            color: #fff;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-control-readonly {
+            background: rgba(255, 255, 255, 0.05) !important;
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .form-label {
+            color: #86efac;
+            font-weight: 600;
+        }
+
+        .form-text {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn-gradient {
+            background: var(--primary-gradient);
+            border: none;
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(34, 197, 94, 0.4);
+            color: #fff;
+        }
+
+        .btn-glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+        }
+
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .info-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .info-label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .badge-sensor {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            border-radius: 10px;
+            margin: 4px;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .badge-sensor-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-sensor-column {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-family: monospace;
+        }
+
+        .sensors-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1rem;
+        }
+
+        .alert-info-custom {
+            background: rgba(14, 165, 233, 0.15);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            color: var(--light-sky);
+            border-radius: 12px;
+        }
+
+        .badge-type {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+            color: #fff;
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-glass">
+        <div class="container">
+            <a class="navbar-brand" href="{{ route('home') }}">
+                <i class="bi bi-tree-fill me-2"></i>SmartAgri
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ route('admin.devices.index') }}">
+                    <i class="bi bi-arrow-left me-1"></i> Kembali ke Devices
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="glass-card shadow-lg">
+                    <div class="card-header-gradient">
+                        <h4 class="mb-0 text-dark">
+                            <i class="bi bi-pencil-square me-2"></i>Edit Device
+                        </h4>
+                    </div>
+                    <div class="card-body p-4">
+
+                        <form action="{{ route('admin.device.update', $device->id) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+
+                            <!-- Info Read Only -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <div class="info-box">
+                                        <div class="info-label"><i class="bi bi-key me-1"></i>Token</div>
+                                        <div class="info-value font-monospace">{{ $device->token }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-box">
+                                        <div class="info-label"><i class="bi bi-cpu me-1"></i>Tipe Alat</div>
+                                        <div class="info-value">
+                                            <span class="badge-type">
+                                                <i
+                                                    class="bi {{ $device->type === 'aws' ? 'bi-cloud-sun' : 'bi-flower1' }} me-1"></i>
+                                                {{ $deviceTypes[$device->type] ?? $device->type }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sensors Info -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="bi bi-thermometer-half me-1"></i> Sensors ({{ $device->sensors->count() }}
+                                    sensor)
+                                </label>
+                                <div class="sensors-container">
+                                    @if($device->sensors->count() > 0)
+                                        @foreach($device->sensors as $sensor)
+                                            <span class="badge-sensor">
+                                                <span class="badge-sensor-name">{{ $sensor->sensor_label }}</span>
+                                                <span class="badge-sensor-column">{{ $sensor->sensor_name }}</span>
+                                            </span>
+                                        @endforeach
+                                    @else
+                                        <span class="text-white-50">Tidak ada sensor</span>
+                                    @endif
+                                </div>
+                                <div class="alert alert-info-custom mt-2 mb-0 py-2">
+                                    <small><i class="bi bi-info-circle me-1"></i>
+                                        Sensor tidak dapat diubah karena sudah terikat dengan struktur tabel database.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <hr class="border-secondary my-4">
+
+                            <!-- Editable Fields -->
+                            <div class="mb-3">
+                                <label class="form-label"><i class="bi bi-tag me-1"></i> Nama Device</label>
+                                <input type="text" name="name" class="form-control" value="{{ $device->name }}"
+                                    required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label"><i class="bi bi-broadcast me-1"></i> MQTT Topic</label>
+                                <input type="text" name="mqtt_topic" class="form-control"
+                                    value="{{ $device->mqtt_topic }}" required>
+                            </div>
+
+                            <div class="d-flex gap-3 mt-4">
+                                <a href="{{ route('admin.devices.index') }}" class="btn btn-glass">
+                                    <i class="bi bi-arrow-left me-1"></i> Kembali
+                                </a>
+                                <button type="submit" class="btn btn-gradient flex-grow-1">
+                                    <i class="bi bi-check-lg me-1"></i> Simpan Perubahan
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

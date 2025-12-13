@@ -1,0 +1,211 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Device;
+use App\Models\DeviceSensor;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+
+// --- IMPORT PENTING UNTUK DATABASE ---
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+// -------------------------------------
+
+class AdminDeviceController extends Controller
+{
+    // Helper: Pastikan yang akses adalah Admin
+    private function checkAdmin()
+    {
+        if (Auth::user()->role !== 'admin') {
+            abort(403, 'Akses Ditolak. Halaman ini khusus Admin.');
+        }
+    }
+
+    // 1. HALAMAN LIST DEVICE (INDEX)
+    public function index()
+    {
+        $this->checkAdmin();
+        $devices = Device::with('sensors')->get();
+        return view('admin.index', compact('devices'));
+    }
+
+    // 2. HALAMAN FORM CREATE
+    public function create()
+    {
+        $this->checkAdmin();
+
+        // Kirim data konfigurasi ke view
+        $deviceTypes = Device::getDeviceTypes();
+        $availableSensors = Device::getAvailableSensors();
+        $defaultSensors = [];
+        foreach (Device::getDeviceTypes() as $type => $label) {
+            $defaultSensors[$type] = Device::getDefaultSensorsForType($type);
+        }
+
+        return view('admin.create_device', compact('deviceTypes', 'availableSensors', 'defaultSensors'));
+    }
+
+    // 3. PROSES SIMPAN DEVICE BARU (STORE)
+    public function store(Request $request)
+    {
+        $this->checkAdmin();
+
+        // A. Validasi Input
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'type' => 'required|string|max:50',
+            'mqtt_topic' => 'required|string|max:100',
+            'sensors' => 'required|array|min:1',
+            'sensors.*.type' => 'required|string',
+        ], [
+            'sensors.required' => 'Tambahkan minimal 1 sensor!',
+            'sensors.min' => 'Tambahkan minimal 1 sensor!',
+            'sensors.*.type.required' => 'Pilih jenis sensor untuk setiap baris!',
+        ]);
+
+        // B. Generate Token Unik & Nama Tabel
+        $token = Str::random(16);
+        $tableName = 'log_' . $token;
+
+        // C. Proses sensor - buat nama kolom unik untuk sensor dengan jenis sama
+        $sensorData = $request->sensors;
+        $availableSensors = Device::getAvailableSensors();
+
+        // Hitung kemunculan setiap jenis sensor untuk membuat nama unik
+        $sensorCounts = [];
+        $processedSensors = [];
+
+        foreach ($sensorData as $sensor) {
+            $sensorType = $sensor['type'];
+            $customLabel = $sensor['label'] ?? '';
+
+            // Increment counter untuk tipe ini
+            if (!isset($sensorCounts[$sensorType])) {
+                $sensorCounts[$sensorType] = 0;
+            }
+            $sensorCounts[$sensorType]++;
+
+            // Buat nama kolom unik
+            $columnName = $sensorType;
+            if ($sensorCounts[$sensorType] > 1 || $this->countSensorType($sensorData, $sensorType) > 1) {
+                $columnName = $sensorType . '_' . $sensorCounts[$sensorType];
+            }
+
+            // Buat label
+            $sensorInfo = $availableSensors[$sensorType] ?? ['label' => $sensorType, 'unit' => ''];
+            $label = $customLabel ?: $sensorInfo['label'];
+            if ($this->countSensorType($sensorData, $sensorType) > 1 && empty($customLabel)) {
+                $label = $sensorInfo['label'] . ' ' . $sensorCounts[$sensorType];
+            }
+
+            $processedSensors[] = [
+                'column_name' => $columnName,
+                'sensor_type' => $sensorType,
+                'label' => $label,
+                'unit' => $sensorInfo['unit'] ?? '',
+            ];
+        }
+
+        // D. BUAT TABEL LOG OTOMATIS dengan kolom sesuai sensor
+        if (!Schema::hasTable($tableName)) {
+            Schema::create($tableName, function (Blueprint $table) use ($processedSensors) {
+                $table->id();
+
+                // Buat kolom untuk setiap sensor
+                foreach ($processedSensors as $sensor) {
+                    $table->float($sensor['column_name'])->nullable();
+                }
+
+                $table->timestamp('recorded_at')->useCurrent();
+            });
+        }
+
+        // E. Simpan Metadata ke Tabel Devices
+        $device = Device::create([
+            'name' => $request->name,
+            'type' => $request->type,
+            'mqtt_topic' => $request->mqtt_topic,
+            'token' => $token,
+            'table_name' => $tableName,
+        ]);
+
+        // F. Simpan Konfigurasi Sensor ke Tabel device_sensors
+        foreach ($processedSensors as $sensor) {
+            DeviceSensor::create([
+                'device_id' => $device->id,
+                'sensor_name' => $sensor['column_name'],  // Nama kolom di tabel log
+                'sensor_label' => $sensor['label'],
+                'unit' => $sensor['unit'],
+            ]);
+        }
+
+        // G. Redirect ke Halaman List Device
+        return redirect()->route('admin.devices.index')
+            ->with('success', "Sukses! Device '$request->name' berhasil dibuat dengan " . count($processedSensors) . " sensor.");
+    }
+
+    // Helper: Hitung berapa kali sensor type muncul dalam array
+    private function countSensorType($sensors, $type)
+    {
+        $count = 0;
+        foreach ($sensors as $sensor) {
+            if ($sensor['type'] === $type) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    // 4. HALAMAN FORM EDIT
+    public function edit($id)
+    {
+        $this->checkAdmin();
+        $device = Device::with('sensors')->findOrFail($id);
+
+        // Kirim data konfigurasi ke view
+        $deviceTypes = Device::getDeviceTypes();
+        $availableSensors = Device::getAvailableSensors();
+
+        return view('admin.edit', compact('device', 'deviceTypes', 'availableSensors'));
+    }
+
+    // 5. PROSES UPDATE DEVICE
+    public function update(Request $request, $id)
+    {
+        $this->checkAdmin();
+
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'mqtt_topic' => 'required|string|max:100',
+        ]);
+
+        $device = Device::findOrFail($id);
+
+        $device->update([
+            'name' => $request->name,
+            'mqtt_topic' => $request->mqtt_topic,
+            // Token, table_name & type JANGAN diupdate agar koneksi database aman
+        ]);
+
+        return redirect()->route('admin.devices.index')
+            ->with('success', 'Data device berhasil diperbarui!');
+    }
+
+    // 6. PROSES HAPUS DEVICE (DESTROY)
+    public function destroy($id)
+    {
+        $this->checkAdmin();
+        $device = Device::findOrFail($id);
+
+        // A. Hapus Tabel Log fisiknya dari database
+        Schema::dropIfExists($device->table_name);
+
+        // B. Hapus data dari tabel devices (sensors akan terhapus otomatis via cascade)
+        $device->delete();
+
+        return redirect()->route('admin.devices.index')
+            ->with('success', 'Device dan Tabel Log berhasil dihapus permanen.');
+    }
+}

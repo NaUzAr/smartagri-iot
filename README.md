@@ -1,59 +1,267 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🌱 SmartAgri - IoT Agriculture Monitoring System
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="https://img.shields.io/badge/Laravel-12.x-red?style=for-the-badge&logo=laravel" />
+  <img src="https://img.shields.io/badge/PHP-8.2+-blue?style=for-the-badge&logo=php" />
+  <img src="https://img.shields.io/badge/PostgreSQL-15-blue?style=for-the-badge&logo=postgresql" />
+  <img src="https://img.shields.io/badge/MQTT-Supported-green?style=for-the-badge" />
 </p>
 
-## About Laravel
+Sistem monitoring pertanian cerdas berbasis IoT dengan Laravel. Pantau kondisi lahan, cuaca, dan sensor tanaman secara real-time.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## ✨ Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- 🔐 **Authentication** - Login & Register dengan role Admin/User
+- 📡 **Device Management** - Admin bisa membuat device dengan sensor dinamis
+- 🌡️ **Dynamic Sensors** - Tambah sensor tanpa batas, termasuk beberapa sensor jenis sama
+- 📊 **Real-time Monitoring** - Grafik Chart.js dan tabel data dengan pagination
+- 🔌 **MQTT Listener** - Background process untuk terima data sensor
+- 🌐 **REST API** - Alternatif HTTP untuk device yang tidak support MQTT
+- 🎨 **Modern UI** - Glassmorphism design dengan tema pertanian (hijau & biru langit)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 📸 Screenshots
 
-## Learning Laravel
+| Beranda | Monitoring |
+|---------|------------|
+| Halaman utama dengan tema pertanian | Dashboard monitoring sensor |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 🚀 Instalasi
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 1. Clone Repository
 
-## Laravel Sponsors
+```bash
+git clone https://github.com/YOUR_USERNAME/smartagri-iot.git
+cd smartagri-iot
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 2. Install Dependencies
 
-### Premium Partners
+```bash
+composer install
+npm install
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 3. Setup Environment
 
-## Contributing
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 4. Konfigurasi Database
 
-## Code of Conduct
+Edit file `.env`:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```env
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=smartagri
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+```
 
-## Security Vulnerabilities
+### 5. Jalankan Migration
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan migrate
+```
 
-## License
+### 6. Jalankan Server
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+php artisan serve
+```
+
+Akses di: `http://localhost:8000`
+
+## 👤 Akun Default
+
+Tidak ada akun default. Register akun baru, akun pertama bisa dijadikan admin dengan mengubah field `role` di database menjadi `admin`.
+
+```sql
+UPDATE users SET role = 'admin' WHERE id = 1;
+```
+
+## 📡 Menerima Data Sensor
+
+### Opsi 1: MQTT Listener
+
+Jalankan di terminal terpisah:
+
+```bash
+# Basic (localhost:1883)
+php artisan mqtt:listen
+
+# Custom broker
+php artisan mqtt:listen --host=broker.emqx.io --port=1883
+
+# Dengan authentication
+php artisan mqtt:listen --host=your-broker.com --username=user --password=pass
+```
+
+**Format JSON dari Device:**
+
+```json
+{
+  "token": "YOUR_16_CHAR_TOKEN",
+  "temperature_1": 25.5,
+  "humidity_1": 80,
+  "soil_moisture": 45
+}
+```
+
+### Opsi 2: HTTP API
+
+```bash
+POST /api/sensor-data
+Content-Type: application/json
+
+{
+  "token": "XXXXXXXXXXXXXXXX",
+  "temperature_1": 25.5,
+  "humidity_1": 80
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Data saved successfully.",
+  "device": "Sensor Kebun 01",
+  "sensors_received": ["temperature_1", "humidity_1"]
+}
+```
+
+### Mendapatkan Data Terbaru
+
+```bash
+GET /api/sensor-data/{token}
+```
+
+## 🏗️ Struktur Project
+
+```
+├── app/
+│   ├── Console/Commands/
+│   │   └── MqttListener.php      # MQTT listener command
+│   ├── Http/Controllers/
+│   │   ├── AdminDeviceController.php
+│   │   ├── AuthController.php
+│   │   ├── MonitoringController.php
+│   │   └── Api/SensorDataController.php
+│   └── Models/
+│       ├── Device.php
+│       ├── DeviceSensor.php
+│       ├── User.php
+│       └── UserDevice.php
+├── resources/views/
+│   ├── admin/                    # Halaman admin
+│   ├── auth/                     # Login & Register
+│   ├── monitoring/               # Halaman monitoring user
+│   └── page/beranda.blade.php    # Landing page
+└── routes/
+    ├── web.php                   # Web routes
+    └── api.php                   # API routes
+```
+
+## 🔧 Tipe Device
+
+Sistem mendukung 2 tipe device:
+
+| Tipe | Nama | Default Sensors |
+|------|------|-----------------|
+| `aws` | AWS (Automatic Weather Station) | Suhu, Kelembaban, Curah Hujan, Kecepatan Angin, Arah Angin |
+| `smart_gh` | Smart GH (Smart Greenhouse) | 2x Suhu, 2x Kelembaban, Kelembaban Tanah, Intensitas Cahaya |
+
+### Menambah Tipe Device Baru
+
+Edit `app/Models/Device.php`:
+
+```php
+public static function getDeviceTypes(): array
+{
+    return [
+        'aws' => 'AWS (Automatic Weather Station)',
+        'smart_gh' => 'Smart GH (Smart Greenhouse)',
+        'new_type' => 'Nama Tipe Baru',  // Tambah disini
+    ];
+}
+```
+
+### Menambah Sensor Baru
+
+Edit `app/Models/Device.php`:
+
+```php
+public static function getAvailableSensors(): array
+{
+    return [
+        'temperature' => ['label' => 'Suhu (Temperature)', 'unit' => '°C', 'icon' => '🌡️'],
+        'humidity' => ['label' => 'Kelembaban (Humidity)', 'unit' => '%', 'icon' => '💧'],
+        // Tambah sensor baru:
+        'new_sensor' => ['label' => 'Sensor Baru', 'unit' => 'unit', 'icon' => '📊'],
+    ];
+}
+```
+
+## 📱 Contoh Kode ESP32/Arduino
+
+```cpp
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
+const char* ssid = "YOUR_WIFI_SSID";
+const char* password = "YOUR_WIFI_PASSWORD";
+const char* serverUrl = "http://YOUR_SERVER_IP/api/sensor-data";
+const char* token = "YOUR_16_CHAR_TOKEN";
+
+void sendSensorData(float temp, float humidity) {
+  HTTPClient http;
+  http.begin(serverUrl);
+  http.addHeader("Content-Type", "application/json");
+
+  StaticJsonDocument<200> doc;
+  doc["token"] = token;
+  doc["temperature_1"] = temp;
+  doc["humidity_1"] = humidity;
+
+  String jsonString;
+  serializeJson(doc, jsonString);
+
+  int httpCode = http.POST(jsonString);
+  
+  if (httpCode > 0) {
+    Serial.println("Data sent successfully!");
+  } else {
+    Serial.println("Error sending data");
+  }
+  
+  http.end();
+}
+```
+
+## 🛠️ Tech Stack
+
+- **Backend**: Laravel 12
+- **Database**: PostgreSQL
+- **Frontend**: Blade Templates, Bootstrap 5, Chart.js
+- **MQTT**: php-mqtt/client
+- **Styling**: Custom CSS dengan Glassmorphism
+
+## 📄 License
+
+MIT License - Bebas digunakan untuk keperluan pribadi maupun komersial.
+
+## 🤝 Contributing
+
+Pull requests are welcome! Untuk perubahan besar, silakan buka issue terlebih dahulu.
+
+---
+
+<p align="center">
+  Made with ❤️ for Smart Agriculture
+</p>
